@@ -1,8 +1,8 @@
 /**
  * Helper for Programming Etherpad Plugins
  * 
- * @version 0.0.1
- * @date 2015-06-11
+ * @version 0.0.2
+ * @date 2015-06-12
  */
 
 var InlineAttribute = function(attributeName, cssClassRegex, cssMapper){
@@ -114,12 +114,10 @@ var LineAttribute = function(attributeName, cssClassRegex, cssMapper){
     };
     
     var matchesClassString = function(classString) {
-        //return cssClassRegex.exec(classString);
         return _getAttributeValueFromClassRegex().exec(classString);
     };
     
     var extractValueFromClassString = function(classString) {
-        //return cssClassRegex.exec(classString)[1];
         return _getAttributeValueFromClassRegex().exec(classString)[1];
     };
     
@@ -149,7 +147,6 @@ module.exports = (function(){
     
     var registerLineAttribute = function(lineAttributeName){
         lineAttributes.push(new LineAttribute(lineAttributeName));
-        lineAttributes.push(new LineAttribute("bla"));
         console.debug("registered line attributes: " + JSON.stringify(lineAttributes));
     };
     
@@ -193,9 +190,7 @@ module.exports = (function(){
             var currentAttributeName = context.key;
             var currentAttributeValue = context.value;
             
-            
             var allAttributes = lineAttributes.concat(inlineAttributes);
-            
             console.debug("looking for attribute " + currentAttributeName + " in " + JSON.stringify(allAttributes));
             
             // LINE ATTRIBUTES
@@ -210,7 +205,7 @@ module.exports = (function(){
             
             return classes;
         };
-        
+                
         /*
         * This hook is called when line attributes are processed to be displayed in the editor
         * We check for classes created in the hook aceAttribsToClasses,
@@ -219,19 +214,15 @@ module.exports = (function(){
         * 
         */
         exports.aceDomLineProcessLineAttributes = function(name, context){
-            var modifiers = [];
             var currentClassString = context.cls;
             
-            lineAttributes.filter(function(lineAttribute){
-                return lineAttribute.matchesClassString(currentClassString);
-            }).forEach(function(lineAttribute){
-                var lineAttributeValue = lineAttribute.extractValueFromClassString(currentClassString);
+            var modifiers = _mapIfClassStringMatches(lineAttributes, currentClassString, function(attribute, attributeValue){
                 var modifier = {
-                    preHtml: lineAttribute.getDomStartTag(lineAttributeValue),
-                    postHtml: lineAttribute.getDomEndTag(),
+                    preHtml: attribute.getDomStartTag(attributeValue),
+                    postHtml: attribute.getDomEndTag(),
                     processedMarker: true
                 };
-                modifiers.push(modifier);
+                return modifier;
             });
             
             console.debug("apply modifiers for classString " + currentClassString + ": " + JSON.stringify(modifiers));
@@ -250,21 +241,19 @@ module.exports = (function(){
          * @returns {Array|exports.aceCreateDomLine.modifiers}
          */
         exports.aceCreateDomLine = function(hook, context) {
-            var classString = context.cls;
+            var currentClassString = context.cls;
             
-            var modifiers = inlineAttributes.filter(function(inlineAttribute){
-                return inlineAttribute.matchesClassString(classString);
-            }).map(function(inlineAttribute){
-                var value = inlineAttribute.extractValueFromClassString(classString);
+            var modifiers = _mapIfClassStringMatches(inlineAttributes, currentClassString, function(attribute, attributeValue){
+                
                 var modifier = {
-                  extraOpenTags: inlineAttribute.getDomStartTag(value),
-                  extraCloseTags: inlineAttribute.getDomEndTag(),
-                  cls: classString
+                  extraOpenTags: attribute.getDomStartTag(attributeValue),
+                  extraCloseTags: attribute.getDomEndTag(),
+                  cls: currentClassString
                 };
                 return modifier;
             });
 
-            //console.debug("push modifiers for classString '" + classString + "': " + JSON.stringify(modifiers));
+            console.debug("push modifiers for classString '" + currentClassString + "': " + JSON.stringify(modifiers));
             return modifiers;
         };
         
@@ -295,10 +284,8 @@ module.exports = (function(){
                         
             // LINE ATTRIBUTES
             if (isBlockElement(context.tname)) {
-                lineAttributes.filter(function(lineAttribute){
-                    return lineAttribute.matchesClassString(currentClassString);
-                }).forEach(function(lineAttribute){
-                    var lineAttributeValue = lineAttribute.extractValueFromClassString(currentClassString);
+                
+                _applyIfClassStringMatches(lineAttributes, currentClassString, function(lineAttribute, lineAttributeValue){
                     context.state.lineAttributes[lineAttribute.attributeName] = lineAttributeValue;
                 });
             }
@@ -313,10 +300,7 @@ module.exports = (function(){
                 var classes = currentClassString.split(" ");
                 
                 classes.forEach(function(cssClass) {
-                    inlineAttributes.filter(function(inlineAttribute){
-                        return inlineAttribute.matchesClassString(cssClass);
-                    }).forEach(function(inlineAttribute){
-                        var inlineAttributeValue = inlineAttribute.extractValueFromClassString(cssClass);
+                    _applyIfClassStringMatches(inlineAttributes, currentClassString, function(inlineAttribute, inlineAttributeValue){
                         var fontWorkaroundString = inlineAttribute.attributeName + "::" + inlineAttributeValue;
                         //console.debug("doAttrib: " + fontWorkaroundString);
                         context.cc.doAttrib(context.state, fontWorkaroundString);
@@ -326,7 +310,23 @@ module.exports = (function(){
         };
     };
     
-    
+    function _applyIfClassStringMatches(attributes, classString, apply) {
+        attributes.filter(function(attribute){
+            return attribute.matchesClassString(classString);
+        }).forEach(function(attribute){
+            var attributeValue = attribute.extractValueFromClassString(classString)
+            apply(attribute, attributeValue);
+        });
+    };
+
+    function _mapIfClassStringMatches(attributes, classString, map) {
+        return attributes.filter(function(attribute){
+            return attribute.matchesClassString(classString);
+        }).map(function(attribute){
+            var attributeValue = attribute.extractValueFromClassString(classString)
+            return map(attribute, attributeValue);
+        });
+    };
     
     return {
         registerLineAttribute : registerLineAttribute,
