@@ -16,7 +16,7 @@
 var InlineAttribute = function(attributeName, attributeValueRegex, cssMapper){
     var DOM_ELEMENT = "span";
     var CLASS_KEY_VALUE_SEPERATOR = "-";
-    var VALUE_MATCHER = attributeValueRegex || /[A-Za-z0-9\-]*/;
+    var VALUE_MATCHER = attributeValueRegex || /[A-Za-z0-9\-]+/;
     
     var CSS_CLASS_REGEX = (function (){
         var prefix = new RegExp("(?:^| )" + attributeName.toLowerCase() + CLASS_KEY_VALUE_SEPERATOR);
@@ -90,7 +90,7 @@ var LineAttribute = function(attributeName){
     * Regular expression that extracts the line attribute from a class string
     */
     var CSS_CLASS_REGEX = (function (){
-        var cssClassRegex = new RegExp("(?:^| )" + attributeName.toLowerCase() + CLASS_KEY_VALUE_SEPERATOR + "([A-Za-z0-9\-]*)");
+        var cssClassRegex = new RegExp("(?:^| )" + attributeName.toLowerCase() + CLASS_KEY_VALUE_SEPERATOR + "([A-Za-z0-9\-]+)");
         console.log("set css class regex for attribute " + attributeName + " to " + cssClassRegex);
         return cssClassRegex;
     })();
@@ -139,7 +139,7 @@ var LineAttribute = function(attributeName){
     };
     
     var matchesClassString = function(classString) {
-        return CSS_CLASS_REGEX.exec(classString);
+        return !!CSS_CLASS_REGEX.exec(classString);
     };
     
     var extractValueFromClassString = function(classString) {
@@ -170,9 +170,9 @@ module.exports = (function(){
     /**
      * Example: {
         attributeName: "font-size",
-        attributeValueRegex: "\d+",
+        attributeValueRegex: /\d+/,
         cssMapper: function(value) {
-            return 'style="font-size:' + value + 'px"';
+            return 'font-size:' + value + 'px';
         }
        }
      */
@@ -331,12 +331,12 @@ module.exports = (function(){
         });
     };
 
-    function _mapIfClassStringMatches(attributes, classString, map) {
+    function _mapIfClassStringMatches(attributes, classString, mappingFunction) {
         return attributes.filter(function(attribute){
             return attribute.matchesClassString(classString);
         }).map(function(attribute){
             var attributeValue = attribute.extractValueFromClassString(classString)
-            return map(attribute, attributeValue);
+            return mappingFunction(attribute, attributeValue);
         });
     };
     
@@ -353,6 +353,11 @@ module.exports = (function(){
         registerDomHooks : registerDomHooks,
         // revealed for testing purpose only
         _InlineAttribute : InlineAttribute,
-        _LineAttribute : LineAttribute
+        _LineAttribute : LineAttribute,
+        _AttribUtils : {
+            _applyIfClassStringMatches : _applyIfClassStringMatches,
+            _mapIfClassStringMatches : _mapIfClassStringMatches,
+            _getDomElementNames : _getDomElementNames
+        }
     };
 })();

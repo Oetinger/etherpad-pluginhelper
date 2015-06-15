@@ -50,3 +50,13 @@ On the other hand you have to restore the attribute values from these classes as
 
 This module takes over this job for you and enables you to focus on implementing 
 the actual business logic of your plugin.
+
+
+Testing
+=========
+
+```
+sudo npm install -g jasmine
+
+jasmine
+```
