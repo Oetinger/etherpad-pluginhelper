@@ -5,17 +5,33 @@
  * @date 2015-06-12
  */
 
-var InlineAttribute = function(attributeName, cssClassRegex, cssMapper){
+/**
+ * Dom Representation of Inline Attributes
+ * Contains methods to create dom elements, classes and style commands
+ * @param {type} attributeName
+ * @param {type} attributeValueRegex
+ * @param {type} cssMapper
+ * @returns {InlineAttribute.epDomHelperAnonym$1}
+ */
+var InlineAttribute = function(attributeName, attributeValueRegex, cssMapper){
+    var DOM_ELEMENT = "span";
+    var CLASS_KEY_VALUE_SEPERATOR = "-";
+    var VALUE_MATCHER = attributeValueRegex || /[A-Za-z0-9\-]*/;
+    
+    var CSS_CLASS_REGEX = (function (){
+        var prefix = new RegExp("(?:^| )" + attributeName.toLowerCase() + CLASS_KEY_VALUE_SEPERATOR);
+        var attributeValueGroup = "(" + VALUE_MATCHER.source + ")";
+        var _cssClassRegex = new RegExp(prefix.source + attributeValueGroup);
+        
+        console.log("set css class regex for attribute " + attributeName + " to " + _cssClassRegex);
+        return _cssClassRegex;
+    })();
     
     /**
      * inline Attributes are represented as span elements containing classes and style attributes
      */
     var getDomElementName = function(){
-        return "span";
-    };
-    
-    var getDomElementClassName = function(value){
-        return attributeName.toLowerCase() + ":" + value;
+        return DOM_ELEMENT;
     };
     
     /**
@@ -28,11 +44,11 @@ var InlineAttribute = function(attributeName, cssClassRegex, cssMapper){
     * @returns {Array}
     */
     var getCssClasses = function(attributeValue) {
-        return [attributeName, attributeName + '-' + attributeValue];
-    };
+        return [attributeName, attributeName + CLASS_KEY_VALUE_SEPERATOR + attributeValue];
+    };    
     
     var getDomStartTag = function(value){
-        return '<span ' + cssMapper(value) + '>';
+        return '<span style="' + cssMapper(value) + '">';
     };
     
     var getDomEndTag = function() {
@@ -40,29 +56,45 @@ var InlineAttribute = function(attributeName, cssClassRegex, cssMapper){
     };
     
     var matchesClassString = function(classString) {
-        return cssClassRegex.exec(classString);
+        return !!CSS_CLASS_REGEX.exec(classString);
     };
     
     var extractValueFromClassString = function(classString) {
-        return cssClassRegex.exec(classString)[1];
+        return CSS_CLASS_REGEX.exec(classString)[1];
     };
-    
     
     return {
         attributeName : attributeName,
-        getDomElementName : getDomElementName,
-        getDomElementClassName : getDomElementClassName,
-        getCssClasses : getCssClasses,
+        getDomElementName : getDomElementName,        
         getDomStartTag : getDomStartTag,
         getDomEndTag : getDomEndTag,
+        getCssClasses : getCssClasses,
         matchesClassString : matchesClassString,
         extractValueFromClassString : extractValueFromClassString
     };
-    
-    
 };
 
-var LineAttribute = function(attributeName, cssClassRegex, cssMapper){
+/**
+ * Dom Representation of Line Attributes
+ * Contains methods to create dom elements, classes and style commands
+ * @param {type} attributeName
+ * @param {type} cssClassRegex
+ * @param {type} cssMapper
+ * @returns {InlineAttribute.epDomHelperAnonym$1}
+ */
+var LineAttribute = function(attributeName){
+    var DOM_ELEMENT = "div";
+    var CLASS_KEY_VALUE_SEPERATOR = ":";
+    
+    /**
+    * Regular expression that extracts the line attribute from a class string
+    */
+    var CSS_CLASS_REGEX = (function (){
+        var cssClassRegex = new RegExp("(?:^| )" + attributeName.toLowerCase() + CLASS_KEY_VALUE_SEPERATOR + "([A-Za-z0-9\-]*)");
+        console.log("set css class regex for attribute " + attributeName + " to " + cssClassRegex);
+        return cssClassRegex;
+    })();
+    
     /*
     * We need to create a container element with classes to preserve the added line attribute in the DOM.
     * The line attribute is restored from DOM to the database in the hook collectContentPre.
@@ -78,32 +110,25 @@ var LineAttribute = function(attributeName, cssClassRegex, cssMapper){
     *  
     */
     var getDomElementName = function(){
-        return "div";
+        return DOM_ELEMENT;
     };
     
     /**
     * Creates the class-string used to preserve the line attribute value in the DOM.
     */
-    var getDomElementClassName = function(attributeValue){
-        return attributeName.toLowerCase() + ":" + attributeValue;
+    var _getDomElementClassName = function(attributeValue){
+        return attributeName.toLowerCase() + CLASS_KEY_VALUE_SEPERATOR + attributeValue;
     };
     
     var getCssClasses = function(attributeValue) {
-        return [getDomElementClassName(attributeValue)];
-    };
-    
-    /**
-    * Regular expression that extracts the line attribute from a class string
-    */
-    var _getAttributeValueFromClassRegex = function(){
-        return new RegExp("(?:^| )" + attributeName.toLowerCase() + ":([A-Za-z0-9\-]*)");
+        return [_getDomElementClassName(attributeValue)];
     };
         
     /**
      * Creates the Markup-String (Start-Tag) for the DOM used to preserve the line attribute
      */
     var getLineAttributeDomStartTag = function(value){
-        return '<' + getDomElementName() + ' class="' + getDomElementClassName(value) + '">';
+        return '<' + getDomElementName() + ' class="' + _getDomElementClassName(value) + '">';
     };
     
     /**
@@ -114,22 +139,21 @@ var LineAttribute = function(attributeName, cssClassRegex, cssMapper){
     };
     
     var matchesClassString = function(classString) {
-        return _getAttributeValueFromClassRegex().exec(classString);
+        return CSS_CLASS_REGEX.exec(classString);
     };
     
     var extractValueFromClassString = function(classString) {
-        return _getAttributeValueFromClassRegex().exec(classString)[1];
+        return CSS_CLASS_REGEX.exec(classString)[1];
     };
     
     return {
         attributeName : attributeName,
         getDomElementName : getDomElementName,
-        getDomElementClassName : getDomElementClassName,
         getDomStartTag : getLineAttributeDomStartTag,
         getDomEndTag : getLineAttributeDomEndTag,
+        getCssClasses : getCssClasses,
         matchesClassString : matchesClassString,
-        extractValueFromClassString : extractValueFromClassString,
-        getCssClasses : getCssClasses
+        extractValueFromClassString : extractValueFromClassString        
     };
 };
 
@@ -137,27 +161,16 @@ var LineAttribute = function(attributeName, cssClassRegex, cssMapper){
 module.exports = (function(){
     var lineAttributes = [];
     var inlineAttributes = [];
-    
-    var _getDomElementNames = function(attributeList){
-        return attributeList.map(function(attribute) {
-            return attribute.getDomElementName();
-        });
-    };
-    
-    
+        
     var registerLineAttribute = function(lineAttributeName){
         lineAttributes.push(new LineAttribute(lineAttributeName));
-        console.debug("registered line attributes: " + JSON.stringify(lineAttributes));
+        console.log("registered line attributes: " + JSON.stringify(lineAttributes));
     };
-    
     
     /**
      * Example: {
         attributeName: "font-size",
-        // TODO: This and the following regular expressions may fail/lead to unexpected results
-        // if some other plugins use class names like xxxfont-size-12.
-        // This could be prevented by checking the characters before/after the matching string.
-        cssClassRegex: /font-size-(\d+)/,
+        attributeValueRegex: "\d+",
         cssMapper: function(value) {
             return 'style="font-size:' + value + 'px"';
         }
@@ -166,15 +179,15 @@ module.exports = (function(){
     var registerInlineAttribute = function(inlineAttribute) {
         inlineAttributes.push(new InlineAttribute(
                 inlineAttribute.attributeName,
-                inlineAttribute.cssClassRegex,
+                inlineAttribute.attributeValueRegex,
                 inlineAttribute.cssMapper));
-        console.debug("registered inline attributes: " + JSON.stringify(inlineAttributes));
+        console.log("registered inline attributes: " + JSON.stringify(inlineAttributes));
     };
     
     var registerDomHooks = function(exports){
         exports.aceRegisterBlockElements = function() {
             var blockElements = _getDomElementNames(lineAttributes);
-            console.debug("registerBlockElements: " + JSON.stringify(blockElements))
+            console.log("registerBlockElements: " + JSON.stringify(blockElements))
             return blockElements;
         };
         
@@ -191,17 +204,17 @@ module.exports = (function(){
             var currentAttributeValue = context.value;
             
             var allAttributes = lineAttributes.concat(inlineAttributes);
-            console.debug("looking for attribute " + currentAttributeName + " in " + JSON.stringify(allAttributes));
+            //console.log("looking for attribute " + currentAttributeName + " in " + JSON.stringify(allAttributes));
             
-            // LINE ATTRIBUTES
-            var classes = allAttributes.filter(function(attribute){
-                return attribute.attributeName === currentAttributeName;
-            }).map(function(attribute){
-                return attribute.getCssClasses(currentAttributeValue);
+            var classes = [];
+            allAttributes.forEach(function(attribute){
+                if (attribute.attributeName === currentAttributeName) {
+                    classes = classes.concat(attribute.getCssClasses(currentAttributeValue));
+                }
             });
             
-            console.debug("mapped attribute " + currentAttributeName + ":" + currentAttributeValue +
-                    "to classes " + JSON.stringify(classes));
+            console.log("mapped attribute " + currentAttributeName + ":" + currentAttributeValue +
+                    " to classes " + JSON.stringify(classes));
             
             return classes;
         };
@@ -225,7 +238,7 @@ module.exports = (function(){
                 return modifier;
             });
             
-            console.debug("apply modifiers for classString " + currentClassString + ": " + JSON.stringify(modifiers));
+            //console.log("apply modifiers for classString " + currentClassString + ": " + JSON.stringify(modifiers));
             
             return modifiers;
         };
@@ -241,10 +254,10 @@ module.exports = (function(){
          * @returns {Array|exports.aceCreateDomLine.modifiers}
          */
         exports.aceCreateDomLine = function(hook, context) {
-            var currentClassString = context.cls;
-            
+            var currentClassString = context.cls;            
+
             var modifiers = _mapIfClassStringMatches(inlineAttributes, currentClassString, function(attribute, attributeValue){
-                
+                //console.log("add modifier for attribute " + attribute.attributeName + ": " + attributeValue);
                 var modifier = {
                   extraOpenTags: attribute.getDomStartTag(attributeValue),
                   extraCloseTags: attribute.getDomEndTag(),
@@ -253,7 +266,7 @@ module.exports = (function(){
                 return modifier;
             });
 
-            console.debug("push modifiers for classString '" + currentClassString + "': " + JSON.stringify(modifiers));
+            console.log("push modifiers for classString '" + currentClassString + "': " + JSON.stringify(modifiers));
             return modifiers;
         };
         
@@ -284,7 +297,6 @@ module.exports = (function(){
                         
             // LINE ATTRIBUTES
             if (isBlockElement(context.tname)) {
-                
                 _applyIfClassStringMatches(lineAttributes, currentClassString, function(lineAttribute, lineAttributeValue){
                     context.state.lineAttributes[lineAttribute.attributeName] = lineAttributeValue;
                 });
@@ -300,9 +312,9 @@ module.exports = (function(){
                 var classes = currentClassString.split(" ");
                 
                 classes.forEach(function(cssClass) {
-                    _applyIfClassStringMatches(inlineAttributes, currentClassString, function(inlineAttribute, inlineAttributeValue){
+                    _applyIfClassStringMatches(inlineAttributes, cssClass, function(inlineAttribute, inlineAttributeValue){
                         var fontWorkaroundString = inlineAttribute.attributeName + "::" + inlineAttributeValue;
-                        //console.debug("doAttrib: " + fontWorkaroundString);
+                        //console.log("doAttrib: " + fontWorkaroundString);
                         context.cc.doAttrib(context.state, fontWorkaroundString);
                     });
                 });
@@ -328,9 +340,19 @@ module.exports = (function(){
         });
     };
     
+    function _getDomElementNames(attributeList){
+        // TODO remove duplicates
+        return attributeList.map(function(attribute) {
+            return attribute.getDomElementName();
+        });
+    };
+    
     return {
         registerLineAttribute : registerLineAttribute,
         registerInlineAttribute : registerInlineAttribute,
-        registerDomHooks : registerDomHooks
+        registerDomHooks : registerDomHooks,
+        // revealed for testing purpose only
+        _InlineAttribute : InlineAttribute,
+        _LineAttribute : LineAttribute
     };
 })();
