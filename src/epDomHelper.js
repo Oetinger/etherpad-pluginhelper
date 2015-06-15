@@ -354,7 +354,7 @@ module.exports = (function(){
             // LINE ATTRIBUTES
             if (isBlockElement(context.tname)) {
                 AttributeHelper.applyIfClassStringMatches(lineAttributes, currentClassString, function(lineAttribute, lineAttributeValue){
-                    HookHelper.pushLineAttribute(lineAttribute.attributeName, lineAttributeValue);
+                    HookHelper.pushLineAttribute(context, lineAttribute.attributeName, lineAttributeValue);
                 });
             }
             
@@ -369,7 +369,7 @@ module.exports = (function(){
                 
                 classes.forEach(function(cssClass) {
                     AttributeHelper.applyIfClassStringMatches(inlineAttributes, cssClass, function(inlineAttribute, inlineAttributeValue){
-                        HookHelper.pushInlineAttribute(inlineAttribute.attributeName, inlineAttributeValue);
+                        HookHelper.pushInlineAttribute(context, inlineAttribute.attributeName, inlineAttributeValue);
                     });
                 });
             }
