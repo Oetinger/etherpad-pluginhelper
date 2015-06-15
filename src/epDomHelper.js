@@ -158,6 +158,78 @@ var LineAttribute = function(attributeName){
 };
 
 
+var AttributeHelper = {
+    applyIfClassStringMatches: function(attributes, classString, apply) {
+        attributes.filter(function(attribute){
+            return attribute.matchesClassString(classString);
+        }).forEach(function(attribute){
+            var attributeValue = attribute.extractValueFromClassString(classString);
+            apply(attribute, attributeValue);
+        });
+    },
+    mapIfClassStringMatches: function(attributes, classString, mappingFunction) {
+        return attributes.filter(function(attribute){
+            return attribute.matchesClassString(classString);
+        }).map(function(attribute){
+            var attributeValue = attribute.extractValueFromClassString(classString);
+            return mappingFunction(attribute, attributeValue);
+        });
+    },    
+    getDomElementNames: function(attributeList){
+        // TODO remove duplicates
+        return attributeList.map(function(attribute) {
+            return attribute.getDomElementName();
+        });
+    },
+    getClassesForMatchingAttributes: function(attributes, attributeName, attributeValue) {
+        var classes = [];
+        attributes.forEach(function(attribute){
+            if (attribute.attributeName === attributeName) {
+                classes = classes.concat(attribute.getCssClasses(attributeValue));
+            }
+        });
+        return classes;
+    }
+};
+
+
+var HookHelper = {
+    /**
+     *  for use in aceDomLineProcessLineAttributes
+     */
+    getLineModifier: function(attribute, attributeValue) {
+        return {
+            preHtml: attribute.getDomStartTag(attributeValue),
+            postHtml: attribute.getDomEndTag(),
+            processedMarker: true
+        };
+    },
+    /**
+     * for use in aceCreateDomLine
+     */
+    getInlineModifier: function(classString, attribute, attributeValue) {
+        return {
+            extraOpenTags: attribute.getDomStartTag(attributeValue),
+            extraCloseTags: attribute.getDomEndTag(),
+            cls: classString
+        };
+    },
+    /**
+     * for use in collectContentPre
+     */
+    pushLineAttribute: function(context, attributeName, attributeValue) {
+        context.state.lineAttributes[attributeName] = attributeValue;
+    },
+    /**
+     * for use in collectContentPre
+     */
+    pushInlineAttribute: function(context, attributeName, attributeValue) {
+        var fontWorkaroundString = attributeName + "::" + attributeValue;
+        context.cc.doAttrib(context.state, fontWorkaroundString);
+    }
+};
+
+
 module.exports = (function(){
     var lineAttributes = [];
     var inlineAttributes = [];
@@ -186,7 +258,7 @@ module.exports = (function(){
     
     var registerDomHooks = function(exports){
         exports.aceRegisterBlockElements = function() {
-            var blockElements = _getDomElementNames(lineAttributes);
+            var blockElements = AttributeHelper.getDomElementNames(lineAttributes);
             console.log("registerBlockElements: " + JSON.stringify(blockElements))
             return blockElements;
         };
@@ -205,13 +277,7 @@ module.exports = (function(){
             
             var allAttributes = lineAttributes.concat(inlineAttributes);
             //console.log("looking for attribute " + currentAttributeName + " in " + JSON.stringify(allAttributes));
-            
-            var classes = [];
-            allAttributes.forEach(function(attribute){
-                if (attribute.attributeName === currentAttributeName) {
-                    classes = classes.concat(attribute.getCssClasses(currentAttributeValue));
-                }
-            });
+            var classes = AttributeHelper.getClassesForMatchingAttributes(allAttributes, currentAttributeName, currentAttributeValue);
             
             console.log("mapped attribute " + currentAttributeName + ":" + currentAttributeValue +
                     " to classes " + JSON.stringify(classes));
@@ -229,13 +295,8 @@ module.exports = (function(){
         exports.aceDomLineProcessLineAttributes = function(name, context){
             var currentClassString = context.cls;
             
-            var modifiers = _mapIfClassStringMatches(lineAttributes, currentClassString, function(attribute, attributeValue){
-                var modifier = {
-                    preHtml: attribute.getDomStartTag(attributeValue),
-                    postHtml: attribute.getDomEndTag(),
-                    processedMarker: true
-                };
-                return modifier;
+            var modifiers = AttributeHelper.mapIfClassStringMatches(lineAttributes, currentClassString, function(attribute, attributeValue){
+                return HookHelper.getLineModifier(attribute, attributeValue);
             });
             
             //console.log("apply modifiers for classString " + currentClassString + ": " + JSON.stringify(modifiers));
@@ -256,14 +317,9 @@ module.exports = (function(){
         exports.aceCreateDomLine = function(hook, context) {
             var currentClassString = context.cls;            
 
-            var modifiers = _mapIfClassStringMatches(inlineAttributes, currentClassString, function(attribute, attributeValue){
+            var modifiers = AttributeHelper.mapIfClassStringMatches(inlineAttributes, currentClassString, function(attribute, attributeValue){
                 //console.log("add modifier for attribute " + attribute.attributeName + ": " + attributeValue);
-                var modifier = {
-                  extraOpenTags: attribute.getDomStartTag(attributeValue),
-                  extraCloseTags: attribute.getDomEndTag(),
-                  cls: currentClassString
-                };
-                return modifier;
+                return HookHelper.getInlineModifier(currentClassString, attribute, attributeValue);
             });
 
             console.log("push modifiers for classString '" + currentClassString + "': " + JSON.stringify(modifiers));
@@ -288,17 +344,17 @@ module.exports = (function(){
             }
             
             var isBlockElement = function(elementName) {
-                return _getDomElementNames(lineAttributes).indexOf(elementName) >= 0;
+                return AttributeHelper.getDomElementNames(lineAttributes).indexOf(elementName) >= 0;
             };
             
             var isInlineElement = function(elementName) {
-                return _getDomElementNames(inlineAttributes).indexOf(elementName) >= 0;
+                return AttributeHelper.getDomElementNames(inlineAttributes).indexOf(elementName) >= 0;
             };
                         
             // LINE ATTRIBUTES
             if (isBlockElement(context.tname)) {
-                _applyIfClassStringMatches(lineAttributes, currentClassString, function(lineAttribute, lineAttributeValue){
-                    context.state.lineAttributes[lineAttribute.attributeName] = lineAttributeValue;
+                AttributeHelper.applyIfClassStringMatches(lineAttributes, currentClassString, function(lineAttribute, lineAttributeValue){
+                    HookHelper.pushLineAttribute(lineAttribute.attributeName, lineAttributeValue);
                 });
             }
             
@@ -312,39 +368,12 @@ module.exports = (function(){
                 var classes = currentClassString.split(" ");
                 
                 classes.forEach(function(cssClass) {
-                    _applyIfClassStringMatches(inlineAttributes, cssClass, function(inlineAttribute, inlineAttributeValue){
-                        var fontWorkaroundString = inlineAttribute.attributeName + "::" + inlineAttributeValue;
-                        //console.log("doAttrib: " + fontWorkaroundString);
-                        context.cc.doAttrib(context.state, fontWorkaroundString);
+                    AttributeHelper.applyIfClassStringMatches(inlineAttributes, cssClass, function(inlineAttribute, inlineAttributeValue){
+                        HookHelper.pushInlineAttribute(inlineAttribute.attributeName, inlineAttributeValue);
                     });
                 });
             }
         };
-    };
-    
-    function _applyIfClassStringMatches(attributes, classString, apply) {
-        attributes.filter(function(attribute){
-            return attribute.matchesClassString(classString);
-        }).forEach(function(attribute){
-            var attributeValue = attribute.extractValueFromClassString(classString)
-            apply(attribute, attributeValue);
-        });
-    };
-
-    function _mapIfClassStringMatches(attributes, classString, mappingFunction) {
-        return attributes.filter(function(attribute){
-            return attribute.matchesClassString(classString);
-        }).map(function(attribute){
-            var attributeValue = attribute.extractValueFromClassString(classString)
-            return mappingFunction(attribute, attributeValue);
-        });
-    };
-    
-    function _getDomElementNames(attributeList){
-        // TODO remove duplicates
-        return attributeList.map(function(attribute) {
-            return attribute.getDomElementName();
-        });
     };
     
     return {
@@ -354,10 +383,7 @@ module.exports = (function(){
         // revealed for testing purpose only
         _InlineAttribute : InlineAttribute,
         _LineAttribute : LineAttribute,
-        _AttribUtils : {
-            _applyIfClassStringMatches : _applyIfClassStringMatches,
-            _mapIfClassStringMatches : _mapIfClassStringMatches,
-            _getDomElementNames : _getDomElementNames
-        }
+        _AttributeHelper : AttributeHelper,
+        _HookHelper : HookHelper
     };
 })();

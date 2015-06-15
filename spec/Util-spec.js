@@ -1,19 +1,22 @@
 var epDomHelper = require('../src/epDomHelper');
 
-var utils = epDomHelper._AttribUtils;
+var utils = epDomHelper._AttributeHelper;
+var hookHelper = epDomHelper._HookHelper;
 var LineAttribute = epDomHelper._LineAttribute;
 var InlineAttribute = epDomHelper._InlineAttribute;
 
-describe("Utils", function () {
+describe("AttributeHelper", function () {
         
     it("should extract the correct dom names", function () {
         // before
         var mockInlineAttribute = {getDomElementName: function(){ return "span"; }},
             mockLineAttribute = {getDomElementName: function(){ return "div"; }};
         
-        // when/verify
-        expect(utils._getDomElementNames([mockInlineAttribute, mockLineAttribute]))
-                .toEqual(["span", "div"]);
+        // when
+        var elementNames = utils.getDomElementNames([mockInlineAttribute, mockLineAttribute]);
+        
+        // verify
+        expect(elementNames).toEqual(["span", "div"]);
     });
     
     it("should apply function only to matching attributes", function(){
@@ -32,7 +35,7 @@ describe("Utils", function () {
         
         
         // when
-        utils._applyIfClassStringMatches([mockMatchingAttribute, mockDifferentAttribute], 
+        utils.applyIfClassStringMatches([mockMatchingAttribute, mockDifferentAttribute], 
             "any-string", spy.callback);
 
         // verify
@@ -56,7 +59,7 @@ describe("Utils", function () {
         
         
         // when
-        var values = utils._mapIfClassStringMatches([mockMatchingAttribute, mockDifferentAttribute], 
+        var values = utils.mapIfClassStringMatches([mockMatchingAttribute, mockDifferentAttribute], 
             "any-string", spy.callback);
 
         // verify
@@ -64,5 +67,92 @@ describe("Utils", function () {
         expect(spy.callback).toHaveBeenCalledWith(mockMatchingAttribute, EXTRACTED_VALUE);
         expect(spy.callback.calls.count()).toEqual(1);
     });
+    
+    it("should return the correct classes", function(){
+        // before
+        var mockAttrib1 = { 
+            attributeName: "name1",
+            getCssClasses: function(){return ["class1a","class1b"];}
+        },
+        mockAttrib2 = { 
+            attributeName: "name2",
+            getCssClasses: function(){return ["class2a","class2b"];}
+        };
+        // when
+        var classes = utils.getClassesForMatchingAttributes(
+                [mockAttrib1, mockAttrib2],"name1","anyValue");
+        
+        // verify
+        expect(classes).toEqual(["class1a","class1b"]);
+    });
+    
+    it("should return the correct classes", function(){
+        // before
+        var mockAttrib1 = { 
+            attributeName: "name1",
+            getCssClasses: function(){return ["class1a","class1b"];}
+        },
+        mockAttrib2 = { 
+            attributeName: "name1",
+            getCssClasses: function(){return ["class2a","class2b"];}
+        };
+        // when
+        var classes = utils.getClassesForMatchingAttributes(
+                [mockAttrib1, mockAttrib2],"name1","anyValue");
+        
+        // verify
+        expect(classes).toEqual(["class1a","class1b","class2a","class2b"]);
+    });
 });
 
+
+
+describe("HookHelper", function () {
+    
+    it("should push return the modifier", function() {
+        // before
+        var mockAttrib1 = { 
+            getDomStartTag: function(){},
+            getDomEndTag: function(){}
+        };
+        spyOn(mockAttrib1, 'getDomStartTag').and.returnValue("<tag>");
+        spyOn(mockAttrib1, 'getDomEndTag').and.returnValue("</tag>");
+        
+        // when
+        var linemodifier = hookHelper.getLineModifier(mockAttrib1, "value");
+        var inlinemodifier = hookHelper.getInlineModifier("classString", mockAttrib1, "value");
+        
+        // verify
+        expect(linemodifier).toEqual({preHtml:"<tag>",postHtml:"</tag>",processedMarker:true});
+        expect(inlinemodifier).toEqual({extraOpenTags:"<tag>",extraCloseTags:"</tag>",cls:"classString"});
+        
+        expect(mockAttrib1.getDomStartTag).toHaveBeenCalledWith( "value");
+        expect(mockAttrib1.getDomStartTag.calls.count()).toEqual(2);
+        expect(mockAttrib1.getDomEndTag.calls.count()).toEqual(2);
+    });
+    
+    
+    it("should push the line attributes", function() {
+        // before
+        var dummyContext = {state: {lineAttributes: {} }};
+        
+        // when
+        hookHelper.pushLineAttribute(dummyContext, "k","v");
+        
+        // verify
+        expect(dummyContext.state.lineAttributes).toEqual({k: "v"})
+    });
+    
+    it("should push the inline attributes", function(){
+        // before
+        var dummyContext = {state:"dummyState",cc: {doAttrib: function(){} }};
+        spyOn(dummyContext.cc, 'doAttrib');
+        
+        // when
+        hookHelper.pushInlineAttribute(dummyContext, "k", "v");
+        
+        // verify
+        var expectedAttribString = "k::v";
+        expect(dummyContext.cc.doAttrib).toHaveBeenCalledWith("dummyState",expectedAttribString);        
+    });
+});
