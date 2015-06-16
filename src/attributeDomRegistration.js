@@ -1,8 +1,8 @@
 /**
- * Helper for Programming Etherpad Plugins
+ * Helper for Handling Attributes in Etherpad Plugins
  * 
- * @version 0.0.2
- * @date 2015-06-12
+ * @version 0.0.3
+ * @date 2015-06-16
  */
 
 /**

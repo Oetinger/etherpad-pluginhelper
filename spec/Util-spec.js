@@ -1,4 +1,4 @@
-var epDomHelper = require('../src/epDomHelper');
+var epDomHelper = require('../src/attributeDomRegistration');
 
 var utils = epDomHelper._AttributeHelper;
 var hookHelper = epDomHelper._HookHelper;

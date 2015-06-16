@@ -1,4 +1,4 @@
-var epDomHelper = require('../src/epDomHelper');
+var epDomHelper = require('../src/attributeDomRegistration');
 
 var LineAttribute = epDomHelper._LineAttribute;
 var InlineAttribute = epDomHelper._InlineAttribute;
