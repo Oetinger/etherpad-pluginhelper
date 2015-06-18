@@ -1,18 +1,16 @@
-var eejs = require("ep_etherpad-lite/node/eejs");
-
 /**
  * provides dependencies installed in the node_modules folder to the client side
  * Example:
  * 
  * exports.expressCreateServer = function (hook_name, args, cb) {
-      provideModule("my-plugin", "node-uuid/uuid", args.app);
+      provideModule("my-plugin", "node-uuid/uuid", args.app, eejs);
    };
  * 
  * @param {String} pluginname plugin that requires the dependency
  * @param {String} modulename name of the required module
  * @param {Object} expressjs app-object
  */
-exports.provideModule = function(pluginname, modulename, app) {
+exports.provideModule = function(pluginname, modulename, app, eejs) {
     var filename = modulename + ".js";
     // Path used to require the module in client side modules, e.g. require("my-plugin/my-module/my-module.js")
     var requirePath = pluginname + '/' + filename;
@@ -22,12 +20,13 @@ exports.provideModule = function(pluginname, modulename, app) {
     var url = '/javascripts/lib/' + requirePath;
     
     
-    var wrappedContent = _getJsForBrowser(pathInPluginFolder, requirePath);
+    var wrappedContent = _getJsForBrowser(pathInPluginFolder, requirePath, eejs);
+    console.log("make module " + modulename + " available at " + url);
     _registerUrlForModule(app, url, wrappedContent);
 };
 
 
-function _getJsForBrowser(filePath, requirePath) {
+function _getJsForBrowser(filePath, requirePath, eejs) {
     var jsSource = eejs.require(filePath, {});
     var wrappedContent = _wrapJsContentWithRequire(requirePath, jsSource);
     return wrappedContent;
