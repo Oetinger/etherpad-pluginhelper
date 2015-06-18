@@ -1,4 +1,4 @@
-var AttributeDomRegistration = require('../src/AttributeDomRegistration');
+var AttributeDomRegistration = require('../AttributeDomRegistration');
 
 var LineAttribute = AttributeDomRegistration.LineAttribute;
 var InlineAttribute = AttributeDomRegistration.InlineAttribute;
