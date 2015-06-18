@@ -1,15 +1,12 @@
-var AttributeDomRegistration = require('../src/attributeDomRegistration');
+var AttributeDomRegistration = require('../src/AttributeDomRegistration');
 
 var LineAttribute = AttributeDomRegistration.LineAttribute;
 var InlineAttribute = AttributeDomRegistration.InlineAttribute;
 
 
-
-
 describe("domRegistration", function () {
     
-    
-    it("should register attributes", function() {
+    it("should register attributes and apply hooks", function() {
         var attributeDomRegistration = new AttributeDomRegistration();
         
         // before

@@ -1,4 +1,4 @@
-var AttributeDomRegistration = require('../src/attributeDomRegistration');
+var AttributeDomRegistration = require('../src/AttributeDomRegistration');
 
 var utils = AttributeDomRegistration._AttributeHelper;
 var hookHelper = AttributeDomRegistration._HookHelper;
