@@ -1,13 +1,13 @@
 var epDomHelper = require('../src/attributeDomRegistration');
 
-var LineAttribute = epDomHelper._LineAttribute;
-var InlineAttribute = epDomHelper._InlineAttribute;
+var LineAttribute = epDomHelper.LineAttribute;
+var InlineAttribute = epDomHelper.InlineAttribute;
 
 describe("InlineAttribute", function () {
-    var fontSize = new InlineAttribute("font-size", /\d+/, 
-    function(value){
+    var fontSize = new InlineAttribute("font-size", {attributeValueRegex: /\d+/, 
+    cssMapper: function(value){
         return "font-size:"+value+"pt";
-    });
+    }});
     
     it("should return span dom elements", function () {
         expect(fontSize.getDomElementName()).toBe("span");
@@ -46,10 +46,12 @@ describe("InlineAttribute", function () {
 
 
 describe("LineAttribute", function () {
-    var lineHeight = new LineAttribute("lineHeight", /\d+/, 
-    function(value){
-        return "lineHeight:"+value;
-    });
+    var lineHeight = new LineAttribute("lineHeight"),
+    lineHeightWithStyle = new LineAttribute("lineHeight", { attributeValueRegex: /\d+/, 
+    cssMapper: function(value){
+        return "lineheight:" + value + "px";
+    }});   
+    
     
     it("should return div dom elements", function () {
         expect(lineHeight.getDomElementName()).toBe("div");
@@ -58,6 +60,11 @@ describe("LineAttribute", function () {
     it("should return div start tags", function () {
         expect(lineHeight.getDomStartTag("1"))
                 .toBe('<div class="lineheight:1">');
+    });
+    
+    it("should return div start tags with style", function () {
+        expect(lineHeightWithStyle.getDomStartTag("12"))
+                .toBe('<div class="lineheight:12" style="lineheight:12px">');
     });
     
     it("should return div end tags", function () {

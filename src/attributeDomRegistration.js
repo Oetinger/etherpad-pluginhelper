@@ -8,16 +8,23 @@
 /**
  * Dom Representation of Inline Attributes
  * Contains methods to create dom elements, classes and style commands
- * @param {type} attributeName
- * @param {type} attributeValueRegex
- * @param {type} cssMapper
- * @returns {InlineAttribute.epDomHelperAnonym$1}
+ * @param {string} attributeName
+ * @param {object} [options] { 
+ *      {RegExp} attributeValueRegex: /\d+/, 
+ *      {string} domElement: "span" 
+ *      {Function} cssMapper: function that maps attribute values to style commands
+ * }
  */
-var InlineAttribute = function(attributeName, attributeValueRegex, cssMapper){
-    var DOM_ELEMENT = "span";
+var InlineAttribute = function(attributeName, options){
+    var options = options || {};
+    var DOM_ELEMENT = options.domElement || "span";
     var CLASS_KEY_VALUE_SEPERATOR = "-";
-    var VALUE_MATCHER = attributeValueRegex || /[A-Za-z0-9\-]+/;
+    var VALUE_MATCHER = options.attributeValueRegex || /[A-Za-z0-9\-]+/;
+    var cssMapper = options.cssMapper;
     
+    /**
+    * Regular expression that extracts the line attribute from a class string
+    */
     var CSS_CLASS_REGEX = (function (){
         var prefix = new RegExp("(?:^| )" + attributeName.toLowerCase() + CLASS_KEY_VALUE_SEPERATOR);
         var attributeValueGroup = "(" + VALUE_MATCHER.source + ")";
@@ -45,14 +52,22 @@ var InlineAttribute = function(attributeName, attributeValueRegex, cssMapper){
     */
     var getCssClasses = function(attributeValue) {
         return [attributeName, attributeName + CLASS_KEY_VALUE_SEPERATOR + attributeValue];
-    };    
-    
-    var getDomStartTag = function(value){
-        return '<span style="' + cssMapper(value) + '">';
     };
     
-    var getDomEndTag = function() {
-        return '</span>';
+    /**
+     * Creates the Markup-String (Start-Tag) for the DOM used to preserve the line attribute
+     */
+    var getDomStartTag = function(value){
+        return '<' + getDomElementName() 
+                + (cssMapper ? ' style="' + cssMapper(value) +'"': '')
+                + '>';
+    };
+    
+    /**
+     * returns the corresponding end-Tag to getDomStartTag()
+     */
+    var getDomEndTag = function(){
+        return '</' + getDomElementName() + '>';
     };
     
     var matchesClassString = function(classString) {
@@ -65,7 +80,7 @@ var InlineAttribute = function(attributeName, attributeValueRegex, cssMapper){
     
     return {
         attributeName : attributeName,
-        getDomElementName : getDomElementName,        
+        getDomElementName : getDomElementName,
         getDomStartTag : getDomStartTag,
         getDomEndTag : getDomEndTag,
         getCssClasses : getCssClasses,
@@ -77,22 +92,30 @@ var InlineAttribute = function(attributeName, attributeValueRegex, cssMapper){
 /**
  * Dom Representation of Line Attributes
  * Contains methods to create dom elements, classes and style commands
- * @param {type} attributeName
- * @param {type} cssClassRegex
- * @param {type} cssMapper
- * @returns {InlineAttribute.epDomHelperAnonym$1}
+ * @param {string} attributeName
+ * @param {object} [options] { 
+ *      {RegExp} attributeValueRegex: /\d+/, 
+ *      {string} domElement: "div" 
+ *      {Function} cssMapper: function that maps attribute values to style commands
+ * }
  */
-var LineAttribute = function(attributeName){
-    var DOM_ELEMENT = "div";
+var LineAttribute = function(attributeName, options){
+    var options = options || {};
+    var DOM_ELEMENT = options.domElement || "div";
     var CLASS_KEY_VALUE_SEPERATOR = ":";
+    var VALUE_MATCHER = options.attributeValueRegex || /[A-Za-z0-9\-]+/;
+    var cssMapper = options.cssMapper;
     
     /**
     * Regular expression that extracts the line attribute from a class string
     */
     var CSS_CLASS_REGEX = (function (){
-        var cssClassRegex = new RegExp("(?:^| )" + attributeName.toLowerCase() + CLASS_KEY_VALUE_SEPERATOR + "([A-Za-z0-9\-]+)");
-        console.log("set css class regex for attribute " + attributeName + " to " + cssClassRegex);
-        return cssClassRegex;
+        var prefix = new RegExp("(?:^| )" + attributeName.toLowerCase() + CLASS_KEY_VALUE_SEPERATOR);
+        var attributeValueGroup = "(" + VALUE_MATCHER.source + ")";
+        var _cssClassRegex = new RegExp(prefix.source + attributeValueGroup);
+        
+        console.log("set css class regex for attribute " + attributeName + " to " + _cssClassRegex);
+        return _cssClassRegex;
     })();
     
     /*
@@ -127,14 +150,18 @@ var LineAttribute = function(attributeName){
     /**
      * Creates the Markup-String (Start-Tag) for the DOM used to preserve the line attribute
      */
-    var getLineAttributeDomStartTag = function(value){
-        return '<' + getDomElementName() + ' class="' + _getDomElementClassName(value) + '">';
+    var getDomStartTag = function(value){
+        var tag = '<' + getDomElementName() 
+                + ' class="' + _getDomElementClassName(value) + '"'
+                + (cssMapper ? ' style="' + cssMapper(value) + '"' : '')
+                + '>';
+        return tag;
     };
     
     /**
-     * returns the corresponding end-Tag to _getLineAttributeDomStartTag()
+     * returns the corresponding end-Tag to getDomStartTag()
      */
-    var getLineAttributeDomEndTag = function(){
+    var getDomEndTag = function(){
         return '</' + getDomElementName() + '>';
     };
     
@@ -149,11 +176,11 @@ var LineAttribute = function(attributeName){
     return {
         attributeName : attributeName,
         getDomElementName : getDomElementName,
-        getDomStartTag : getLineAttributeDomStartTag,
-        getDomEndTag : getLineAttributeDomEndTag,
+        getDomStartTag : getDomStartTag,
+        getDomEndTag : getDomEndTag,
         getCssClasses : getCssClasses,
         matchesClassString : matchesClassString,
-        extractValueFromClassString : extractValueFromClassString        
+        extractValueFromClassString : extractValueFromClassString
     };
 };
 
@@ -234,32 +261,40 @@ module.exports = (function(){
     var lineAttributes = [];
     var inlineAttributes = [];
         
-    var registerLineAttribute = function(lineAttributeName){
-        lineAttributes.push(new LineAttribute(lineAttributeName));
+    /**
+     * Example: 
+     * registerLineAttribute(new LineAttribute("lineHeight",{
+            attributeValueRegex: /\d+/,
+            cssMapper: function(value) {
+                return 'lineHeight:' + value + 'px';
+            }
+        }
+       ));
+     */
+    var registerLineAttribute = function(lineAttribute){
+        lineAttributes.push(lineAttribute);
         console.log("registered line attributes: " + JSON.stringify(lineAttributes));
     };
     
     /**
-     * Example: {
-        attributeName: "font-size",
-        attributeValueRegex: /\d+/,
-        cssMapper: function(value) {
-            return 'font-size:' + value + 'px';
+     * Example: 
+     * registerInlineAttribute(new InlineAttribute("font-size",{
+            attributeValueRegex: /\d+/,
+            cssMapper: function(value) {
+                return 'font-size:' + value + 'px';
+            }
         }
-       }
+       ));
      */
     var registerInlineAttribute = function(inlineAttribute) {
-        inlineAttributes.push(new InlineAttribute(
-                inlineAttribute.attributeName,
-                inlineAttribute.attributeValueRegex,
-                inlineAttribute.cssMapper));
+        inlineAttributes.push(inlineAttribute);
         console.log("registered inline attributes: " + JSON.stringify(inlineAttributes));
     };
     
     var registerDomHooks = function(exports){
         exports.aceRegisterBlockElements = function() {
             var blockElements = AttributeHelper.getDomElementNames(lineAttributes);
-            console.log("registerBlockElements: " + JSON.stringify(blockElements))
+            console.log("registerBlockElements: " + JSON.stringify(blockElements));
             return blockElements;
         };
         
@@ -342,24 +377,16 @@ module.exports = (function(){
             if (!currentClassString) {
                 return;
             }
-            
-            var isBlockElement = function(elementName) {
-                return AttributeHelper.getDomElementNames(lineAttributes).indexOf(elementName) >= 0;
-            };
-            
-            var isInlineElement = function(elementName) {
-                return AttributeHelper.getDomElementNames(inlineAttributes).indexOf(elementName) >= 0;
-            };
                         
             // LINE ATTRIBUTES
-            if (isBlockElement(context.tname)) {
+            if (_isBlockElement(context.tname)) {
                 AttributeHelper.applyIfClassStringMatches(lineAttributes, currentClassString, function(lineAttribute, lineAttributeValue){
                     HookHelper.pushLineAttribute(context, lineAttribute.attributeName, lineAttributeValue);
                 });
             }
             
             // INLINE ATTRIBUTES
-            if (isInlineElement(context.tname)) {
+            if (_isInlineElement(context.tname)) {
                 /**
                  * split a class string like 
                  * "font-color font-color-00ff00 font-size font-size-12 font-family font-family-serif else"
@@ -374,15 +401,23 @@ module.exports = (function(){
                 });
             }
         };
+        
+        function _isBlockElement(elementName) {
+            return AttributeHelper.getDomElementNames(lineAttributes).indexOf(elementName) >= 0;
+        };
+
+        function _isInlineElement(elementName) {
+            return AttributeHelper.getDomElementNames(inlineAttributes).indexOf(elementName) >= 0;
+        };
     };
     
     return {
         registerLineAttribute : registerLineAttribute,
         registerInlineAttribute : registerInlineAttribute,
         registerDomHooks : registerDomHooks,
+        InlineAttribute : InlineAttribute,
+        LineAttribute : LineAttribute,
         // revealed for testing purpose only
-        _InlineAttribute : InlineAttribute,
-        _LineAttribute : LineAttribute,
         _AttributeHelper : AttributeHelper,
         _HookHelper : HookHelper
     };
