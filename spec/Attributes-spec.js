@@ -1,7 +1,7 @@
-var epDomHelper = require('../src/attributeDomRegistration');
+var AttributeDomRegistration = require('../src/attributeDomRegistration');
 
-var LineAttribute = epDomHelper.LineAttribute;
-var InlineAttribute = epDomHelper.InlineAttribute;
+var LineAttribute = AttributeDomRegistration.LineAttribute;
+var InlineAttribute = AttributeDomRegistration.InlineAttribute;
 
 describe("InlineAttribute", function () {
     var fontSize = new InlineAttribute("font-size", {attributeValueRegex: /\d+/, 

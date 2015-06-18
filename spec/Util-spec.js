@@ -1,9 +1,9 @@
-var epDomHelper = require('../src/attributeDomRegistration');
+var AttributeDomRegistration = require('../src/attributeDomRegistration');
 
-var utils = epDomHelper._AttributeHelper;
-var hookHelper = epDomHelper._HookHelper;
-var LineAttribute = epDomHelper._LineAttribute;
-var InlineAttribute = epDomHelper._InlineAttribute;
+var utils = AttributeDomRegistration._AttributeHelper;
+var hookHelper = AttributeDomRegistration._HookHelper;
+var LineAttribute = AttributeDomRegistration._LineAttribute;
+var InlineAttribute = AttributeDomRegistration._InlineAttribute;
 
 describe("AttributeHelper", function () {
         

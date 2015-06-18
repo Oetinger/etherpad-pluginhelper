@@ -1,7 +1,7 @@
-var attributeDomRegistration = require('../src/attributeDomRegistration');
+var AttributeDomRegistration = require('../src/attributeDomRegistration');
 
-var LineAttribute = attributeDomRegistration.LineAttribute;
-var InlineAttribute = attributeDomRegistration.InlineAttribute;
+var LineAttribute = AttributeDomRegistration.LineAttribute;
+var InlineAttribute = AttributeDomRegistration.InlineAttribute;
 
 
 
@@ -10,6 +10,8 @@ describe("domRegistration", function () {
     
     
     it("should register attributes", function() {
+        var attributeDomRegistration = new AttributeDomRegistration();
+        
         // before
         attributeDomRegistration.registerInlineAttribute(new InlineAttribute("font-size", {cssMapper: function(value){ return "font-size:"+value+"px";}}));
         attributeDomRegistration.registerLineAttribute(new LineAttribute("lineHeight", {cssMapper: function(value){ return "lineHeight:"+value+"px";}}));

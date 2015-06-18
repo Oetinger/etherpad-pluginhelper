@@ -257,7 +257,7 @@ var HookHelper = {
 };
 
 
-module.exports = (function(){
+var AttributeDomRegistration = function(){
     var lineAttributes = [];
     var inlineAttributes = [];
         
@@ -414,11 +414,16 @@ module.exports = (function(){
     return {
         registerLineAttribute : registerLineAttribute,
         registerInlineAttribute : registerInlineAttribute,
-        registerDomHooks : registerDomHooks,
-        InlineAttribute : InlineAttribute,
-        LineAttribute : LineAttribute,
-        // revealed for testing purpose only
-        _AttributeHelper : AttributeHelper,
-        _HookHelper : HookHelper
+        registerDomHooks : registerDomHooks
     };
-})();
+};
+
+AttributeDomRegistration.InlineAttribute = InlineAttribute;
+AttributeDomRegistration.LineAttribute = LineAttribute;
+
+// revealed for testing purpose only
+AttributeDomRegistration._AttributeHelper = AttributeHelper;
+AttributeDomRegistration._HookHelper = HookHelper;
+
+module.exports = AttributeDomRegistration;
+
