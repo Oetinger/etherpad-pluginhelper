@@ -1,13 +1,20 @@
 {
   "name": "etherpad-pluginhelper",
   "description": "Provides Convenience methods for programming etherpad plugins",
-  "homepage": "",
+  "homepage": "https://github.com/Oe34/wr-etherpad-plugin-helper",
   "keywords": [
     "etherpad"
   ],
   "version": "0.0.1",
+  "scripts": {
+    "pretest": "jshint **.js",
+    "test": "jasmine"
+  },
   "dependencies": {},
-  "devDependencies": {  },
+  "devDependencies": { 
+      "jshint": "latest",
+      "jasmine": "latest"
+  },
   "optionalDependencies": {},
   "engines": {
     "node": "*"

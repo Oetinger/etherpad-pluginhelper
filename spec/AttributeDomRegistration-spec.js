@@ -22,7 +22,7 @@ describe("domRegistration", function () {
             cc: { doAttrib: function(){} }
         };
         var ccContextLine = { 
-            cls: "lineheight:12",
+            cls: "lineheight-12",
             tname: "div",
             state: { lineAttributes : {}}
         };
@@ -43,9 +43,9 @@ describe("domRegistration", function () {
         
         expect(hooks.aceRegisterBlockElements()).toEqual(["div"]);
         expect(hooks.aceAttribsToClasses("",{key: "font-size", value:12})).toEqual(["font-size", "font-size-12"]);
-        expect(hooks.aceAttribsToClasses("",{key: "lineHeight", value:12})).toEqual(["lineheight:12"]);
-        expect(hooks.aceDomLineProcessLineAttributes("",{cls: "lineheight:12"})).toEqual([{
-               preHtml: '<div class="lineheight:12" style="lineHeight:12px">',
+        expect(hooks.aceAttribsToClasses("",{key: "lineHeight", value:12})).toEqual(["lineheight-12"]);
+        expect(hooks.aceDomLineProcessLineAttributes("",{cls: "lineheight-12"})).toEqual([{
+               preHtml: '<div class="lineheight-12" style="lineHeight:12px">',
                postHtml: '</div>',
                processedMarker: true
         }]);

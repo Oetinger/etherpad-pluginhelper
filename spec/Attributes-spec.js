@@ -59,12 +59,12 @@ describe("LineAttribute", function () {
     
     it("should return div start tags", function () {
         expect(lineHeight.getDomStartTag("1"))
-                .toBe('<div class="lineheight:1">');
+                .toBe('<div class="lineheight-1">');
     });
     
     it("should return div start tags with style", function () {
         expect(lineHeightWithStyle.getDomStartTag("12"))
-                .toBe('<div class="lineheight:12" style="lineheight:12px">');
+                .toBe('<div class="lineheight-12" style="lineheight:12px">');
     });
     
     it("should return div end tags", function () {
@@ -73,19 +73,19 @@ describe("LineAttribute", function () {
     });
     
     it("should match class the correct class string", function () {
-        expect(lineHeight.matchesClassString("lineheight:12")).toBe(true);
+        expect(lineHeight.matchesClassString("lineheight-12")).toBe(true);
         
-        expect(lineHeight.matchesClassString(" lineheight:12 ")).toBe(true);
+        expect(lineHeight.matchesClassString(" lineheight-12 ")).toBe(true);
         
-        expect(lineHeight.extractValueFromClassString(" lineheight:12 "))
+        expect(lineHeight.extractValueFromClassString(" lineheight-12 "))
                 .toBe("12");
         
-        expect(lineHeight.matchesClassString("linefasel:12")).toBe(false);
+        expect(lineHeight.matchesClassString("linefasel-12")).toBe(false);
         
-        expect(lineHeight.matchesClassString("lineheight: 34b")).toBe(false);
+        expect(lineHeight.matchesClassString("lineheight- 34b")).toBe(false);
     });
     
     it("should return the correct css classes", function () {
-        expect(lineHeight.getCssClasses(12)).toEqual(["lineheight:12"]);
+        expect(lineHeight.getCssClasses(12)).toEqual(["lineheight-12"]);
     });
 });  
