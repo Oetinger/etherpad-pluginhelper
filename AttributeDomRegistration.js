@@ -311,8 +311,8 @@ var AttributeDomRegistration = function(){
             //console.log("looking for attribute " + currentAttributeName + " in " + JSON.stringify(allAttributes));
             var classes = AttributeHelper.getClassesForMatchingAttributes(allAttributes, currentAttributeName, currentAttributeValue);
             
-            console.log("mapped attribute " + currentAttributeName + ":" + currentAttributeValue +
-                    " to classes " + JSON.stringify(classes));
+            //console.log("mapped attribute " + currentAttributeName + ":" + currentAttributeValue +
+            //        " to classes " + JSON.stringify(classes));
             
             return classes;
         };
@@ -354,7 +354,7 @@ var AttributeDomRegistration = function(){
                 return HookHelper.getInlineModifier(currentClassString, attribute, attributeValue);
             });
 
-            console.log("push modifiers for classString '" + currentClassString + "': " + JSON.stringify(modifiers));
+            //console.log("push modifiers for classString '" + currentClassString + "': " + JSON.stringify(modifiers));
             return modifiers;
         };
         

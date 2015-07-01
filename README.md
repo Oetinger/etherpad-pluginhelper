@@ -6,23 +6,70 @@ This is necessary:
 
 Usage
 ======
+At first you have to define etherpad-pluginhelper as a dependency in your package.json.
 
+package.json:
+```
+"dependencies": {
+      // TODO change this when plugin has been made public
+      "etherpad-pluginhelper": "git+ssh://git@github.com/Oe34/wr-etherpad-plugin-helper.git"
+  }
+```
+
+You have to declare the hooks that the pluginhelper registers
+
+ep.json:
+```
+    "client_hooks": {
+        "aceDomLineProcessLineAttributes": "ep_<pluginname>/static/js/index",
+        "aceAttribsToClasses": "ep_<pluginname>/static/js/index",
+        "collectContentPre": "ep_<pluginname>/static/js/index",
+        "aceRegisterBlockElements": "ep_<pluginname>/static/js/index"
+    },
+    "hooks" : {
+        "expressCreateServer": "ep_<pluginname>/index.js"
+    }
+```
+
+As npm modules are not available to the browser out of the box, the pluginhelper provides 
+the following workaround:
+
+index.js
+```
+var eejs = require('ep_etherpad-lite/node/eejs/');
+var npmToClient = require('etherpad-pluginhelper/npmToClient');
+
+exports.expressCreateServer = function(hook_name, args, cb){
+    npmToClient.provideModule(<pluginname>, "etherpad-pluginhelper/AttributeDomRegistration", args.app, eejs);
+};
+```
+
+Finally you define the Attributes you need in your application:
+
+static/js/index.js:
 ```
 var EtherpadDomHelper = require('./epDomHelper');
 // register an inline attribute
-EtherpadDomHelper.registerInlineAttribute({
-    attributeName: "my-font-property",
-    cssClassRegex: /my-font-property-([a-z]+)/,
+EtherpadDomHelper.registerInlineAttribute(new InlineAttribute("my-font-property", {
+    attributeValueRegex: /([a-z]+)/,
     cssMapper: function(value) {
-        return 'style="font-family:"' + value + '"';
+        return 'font-family:"' + value;
     }
-});
+}));
+
 // register a line attribute
 EtherpadDomHelper.registerLineAttribute("paragraphStyle");
 
 // register all needed hooks
 EtherpadDomHelper.registerDomHooks(exports);
 ```
+
+The second argument of the register*Attribute methods is optional and may provide the following fields:
+
+* attributeValueRegex: a JavaScript regex object that defines what a valid value of your attribute has to look like
+* cssMapper: a function that receives an attribute value and returns the style commands applied to the corresponding element in the editor
+* domElement: a string that defines which dom element should be used representing the line attribute. Defaults to "div" for lineAttributes and "span" for inlineAttributes.
+
 
 Internals
 =======
