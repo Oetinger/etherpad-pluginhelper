@@ -53,7 +53,7 @@ var EtherpadDomHelper = require('./epDomHelper');
 EtherpadDomHelper.registerInlineAttribute(new InlineAttribute("my-font-property", {
     attributeValueRegex: /([a-z]+)/,
     cssMapper: function(value) {
-        return 'font-family:"' + value;
+        return 'font-family:' + value;
     }
 }));
 
