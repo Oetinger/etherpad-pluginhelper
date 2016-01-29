@@ -11,14 +11,14 @@
  * @param {Object} expressjs app-object
  */
 exports.provideModule = function(pluginname, modulename, app, eejs) {
-    var requireName = require.resolve(modulename);
-    console.log(requireName);
+    // Path where to lookup the required file
+    var pathInPluginFolder = require.resolve(modulename);
+    // remove unnecessary parts of path
+    pathInPluginFolder = pathInPluginFolder.substr(pathInPluginFolder.indexOf('/etherpad/node_modules/') + 23);
     
     var filename = modulename + ".js";
     // Path used to require the module in client side modules, e.g. require("my-plugin/my-module/my-module.js")
     var requirePath = pluginname + '/' + filename;
-    // Path where to lookup the required file
-    var pathInPluginFolder = pluginname + "/node_modules/" + filename;
     // url (host relative) that delivers the required file
     var url = '/javascripts/lib/' + requirePath;
     
