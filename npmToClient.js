@@ -11,6 +11,9 @@
  * @param {Object} expressjs app-object
  */
 exports.provideModule = function(pluginname, modulename, app, eejs) {
+    var requireName = require.resolve(modulename);
+    console.log(requireName);
+    
     var filename = modulename + ".js";
     // Path used to require the module in client side modules, e.g. require("my-plugin/my-module/my-module.js")
     var requirePath = pluginname + '/' + filename;
