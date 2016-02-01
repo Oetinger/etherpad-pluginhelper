@@ -13,8 +13,8 @@
 exports.provideModule = function(pluginname, modulename, app, eejs) {
     // Path where to lookup the required file
     var pathInPluginFolder = require.resolve(modulename);
-    // remove unnecessary parts of path
-    pathInPluginFolder = pathInPluginFolder.substr(pathInPluginFolder.indexOf('/etherpad/node_modules/') + 23);
+    // remove unnecessary parts of path (aka everything left of the first node_modules)
+    pathInPluginFolder = pathInPluginFolder.substr(pathInPluginFolder.indexOf('node_modules/') + 13);
     
     var filename = modulename + ".js";
     // Path used to require the module in client side modules, e.g. require("my-plugin/my-module/my-module.js")
