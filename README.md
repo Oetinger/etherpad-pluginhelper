@@ -11,8 +11,7 @@ At first you have to define etherpad-pluginhelper as a dependency in your packag
 package.json:
 ```
 "dependencies": {
-      // TODO change this when plugin has been made public
-      "etherpad-pluginhelper": "git+ssh://git@github.com/Oe34/wr-etherpad-plugin-helper.git"
+      "etherpad-pluginhelper": "git+ssh://git@github.com/Oetinger/etherpad-pluginhelper.git"
   }
 ```
 
